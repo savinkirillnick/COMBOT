@@ -1,0 +1,1342 @@
+<html>
+<head>
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-47078483-4"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-47078483-4');
+</script>
+<title>
+Comparisson-Observer Multi-Exchange Arbitrage Bot
+</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="Bitcoin Altcoin Comparisson-Observer Multi-Exchange Arbitrage Bot" />
+<meta property="keywords" content="" />
+<meta property="og:description" content="Bitcoin Altcoin Comparisson-Observer Multi-Exchange Arbitrage Bot" />
+<meta property="og:image" content="http://funnymay.com/images/thumb.jpg" />
+<meta property="og:title" content="Comparisson-Observer Multi-Exchange Arbitrage Bot" />
+<meta property="og:type" content="website" />
+<meta property="og:url" content="http://funnymay.com/" />
+  <style type="text/css">
+   body {
+    font-family: sans-serif;
+    background-color: #ffffff;
+    color: #303132;
+   }
+   input, select {
+    background-color: #d9edf7;
+    padding: 2px;
+    margin: 2px;
+    border: 1px solid #ffffff;
+    color: #303132;
+   }
+   b {
+    color: #3bb3e4;
+   }
+   td, div {
+    font-family: inherit;
+    font-size: 14px;
+   }
+   .priceup {
+    color: #53b987;
+   }
+   .pricedown {
+    color: #eb4d5c;
+   }
+   .pricenotchanged {
+    color: #303132;
+   }
+   .tab_cell {
+    color: #666666;
+    width: 80px;
+	padding:2px;
+	text-align: center;
+   }
+   .tab_cell_ask {
+    width: 50px;
+	padding:2px;
+	text-align: center;
+	 background-color: #eb4d5c;
+   }
+   .tab_cell_bid {
+    width: 50px;
+	padding:2px;
+	text-align: center;
+	background-color: #53b987;
+   }
+   .start_button {
+    width: 70px;
+    margin: 2px;
+	padding: 12px;
+	text-align: center;
+	background-color: #53b987;
+   }
+   .stop_button {
+    width: 70px;
+    margin: 2px;
+	padding: 12px;
+	text-align: center;
+	background-color: #eb4d5c;
+   }
+   .price {
+    color: #000000;
+   }
+   .star {
+    color: #ffa500;
+   }
+  </style>
+</head>
+<script type="text/javascript" src="aes.js"></script>
+<script type="text/javascript" src="xhr.js"></script>
+<script type="text/javascript" src="cookies.js"></script>
+<script type="text/javascript" >
+/*Global Variables*/
+
+//Глобальный массив
+var _g = [];
+
+//Строка хост
+_g["host"] = window.location.protocol+"//"+window.location.hostname+"/combot";
+
+//Правила биржи
+_g["rules"] = [];
+
+//Сохраненные настройки
+_g["set"] = [];
+
+//Доступные депозиты для базовой и котируемой бирж
+_g["basicBalances"] = [];
+_g["catBalances"] = [];
+
+//Массив пар
+_g["pairs"] = [];
+
+//Массив активных ордеров
+_g["orders"] = [];
+
+//Счетчик активных ордеров
+_g["numOrders"] = 0;
+
+//Счетчик отправленных ордеров
+_g["numSendOrders"] = 0;
+
+//Счетчик переключения функций
+_g["iFoo"] = 1;
+
+//Счетчик заполнения строки активности
+_g["iProg"] = 0;
+
+//Флажок работы бота
+_g["botIsRun"] = 0;
+
+//Очередь ордеров на отмену
+_g["queueOrders"] = 0;
+
+/*Global Variables OK*/
+</script>
+<script type="text/javascript" >
+/*Logs*/
+
+function log(str) {
+
+var timeData = new Date;
+
+timeData = "[" + timeData.getFullYear() + "-" +
+("00" + (timeData.getMonth() + 1)).slice(-2) + "-" +
+("00" + timeData.getDate()).slice(-2) +
+"] (" +
+("00" + timeData.getHours()).slice(-2) + ":" +
+("00" + timeData.getMinutes()).slice(-2) + ":" +
+("00" + timeData.getSeconds()).slice(-2) +
+")";
+
+document.getElementById('logs').innerHTML += timeData + " " + str + "<br>";
+}
+
+/*Logs*/
+</script>
+<script type="text/javascript" >
+/*Bar Options*/
+
+function hiddenPop() {
+
+	document.getElementById('run').style.display = 'none';
+	document.getElementById('hide_button').innerHTML = "<span onClick='showPop()' style='cursor: pointer; cursor: hand;'>Показать</span>";
+
+}
+
+function showPop() {
+
+	document.getElementById('run').style.display = 'block';
+	document.getElementById('hide_button').innerHTML = "<span onClick='hiddenPop()' style='cursor: pointer; cursor: hand;'>Скрыть лишнее</span>";
+
+}
+
+/*Bar Options OK*/
+</script>
+<script type="text/javascript" >
+/*Settings_START*/
+
+function saveSettings () {
+
+	deleteCookie('combot_set_'+top.document.runBot.botSet.value);
+
+	var date = new Date;
+	date.setDate( date.getDate() + 365 );
+
+	//Защита от ввода пустых значений
+	if(top.document.runBot.wexSecret.value==""){top.document.runBot.wexSecret.value=0;}
+	if(top.document.runBot.showExBaseQty.value==""){top.document.runBot.showExBaseQty.value=0;}
+	if(top.document.runBot.showExCatQty.value==""){top.document.runBot.showExCatQty.value=0;}
+	if(top.document.runBot.minOrder.value==""){top.document.runBot.minOrder.value=0;}
+	if(top.document.runBot.activeOrder.value==""){top.document.runBot.activeOrder.value=0;}
+	if(top.document.runBot.basicOrder.value==""){top.document.runBot.basicOrder.value=0;}
+	if(top.document.runBot.distance.value==""){top.document.runBot.distance.value=0;}
+	if(top.document.runBot.step.value==""){top.document.runBot.step.value=0;}
+	if(top.document.runBot.static.value==""){top.document.runBot.static.value=0;}
+	if(top.document.runBot.maxStatPrice.value==""){top.document.runBot.maxStatPrice.value=0;}
+	if(top.document.runBot.maxDynamPrice.value==""){top.document.runBot.maxDynamPrice.value=0;}
+	if(top.document.runBot.maxDynamRatio.value==""){top.document.runBot.maxDynamRatio.value=0;}
+	if(top.document.runBot.stepTime.value==""){top.document.runBot.stepTime.value=60;}
+
+	var cookieString = '{"set":"'+top.document.runBot.botSet.value+
+	'","binanceKey":"'+top.document.runBot.binanceKey.value+
+	'","binanceSecret":"'+top.document.runBot.binanceSecret.value+
+	'","bitfinexKey":"'+top.document.runBot.bitfinexKey.value+
+	'","bitfinexSecret":"'+top.document.runBot.bitfinexSecret.value+
+	'","huobiKey":"'+top.document.runBot.huobiKey.value+
+	'","huobiSecret":"'+top.document.runBot.huobiSecret.value+
+	'","okexKey":"'+top.document.runBot.okexKey.value+
+	'","okexSecret":"'+top.document.runBot.okexSecret.value+
+	'","poloniexKey":"'+top.document.runBot.poloniexKey.value+
+	'","poloniexSecret":"'+top.document.runBot.poloniexSecret.value+
+	'","wexKey":"'+top.document.runBot.wexKey.value+
+	'","wexSecret":"'+top.document.runBot.wexSecret.value+
+	'","exBase":"'+top.document.runBot.exBase.selectedIndex+
+	'","exCat":"'+top.document.runBot.exCat.selectedIndex+
+	'","basePairs":'+top.document.runBot.basePairs.value+
+	',"catPairs":'+top.document.runBot.catPairs.value+
+	',"showExBaseQty":'+top.document.runBot.showExBaseQty.value+
+	',"showExCatQty":'+top.document.runBot.showExCatQty.value+
+	',"orderType":'+top.document.runBot.orderType.selectedIndex+
+	',"minOrder":'+top.document.runBot.minOrder.value+
+	',"activeOrder":'+top.document.runBot.activeOrder.value+
+	',"basicOrder":'+top.document.runBot.basicOrder.value+
+	',"distance":'+top.document.runBot.distance.value+
+	',"step":'+top.document.runBot.step.value+
+	',"static":'+top.document.runBot.static.value+
+	',"maxStatPrice":'+top.document.runBot.maxStatPrice.value+
+	',"maxDynamPrice":'+top.document.runBot.maxDynamPrice.value+
+	',"maxDynamRatio":'+top.document.runBot.maxDynamRatio.value+
+	',"fromActiveOrder":'+top.document.runBot.fromActiveOrder.checked+
+	',"fromOpposedOrder":'+top.document.runBot.fromOpposedOrder.checked+
+	',"maxStat":'+top.document.runBot.maxStat.checked+
+	',"maxDynam":'+top.document.runBot.maxDynam.checked+
+	',"minSound":'+top.document.runBot.minSound.checked+
+	',"activeSound":'+top.document.runBot.activeSound.checked+
+	',"basicSound":'+top.document.runBot.basicSound.checked+
+	',"stepTime":'+top.document.runBot.stepTime.value+'}';
+
+	_g["set"]["binanceKey"] = top.document.runBot.binanceKey.value;
+	_g["set"]["binanceSecret"] = top.document.runBot.binanceSecret.value;
+	_g["set"]["bitfinexKey"] = top.document.runBot.bitfinexKey.value;
+	_g["set"]["bitfinexSecret"] = top.document.runBot.bitfinexSecret.value;
+	_g["set"]["huobiKey"] = top.document.runBot.huobiKey.value;
+	_g["set"]["huobiSecret"] = top.document.runBot.huobiSecret.value;
+	_g["set"]["okexKey"] = top.document.runBot.okexKey.value;
+	_g["set"]["okexSecret"] = top.document.runBot.okexSecret.value;
+	_g["set"]["poloniexKey"] = top.document.runBot.poloniexKey.value;
+	_g["set"]["poloniexSecret"] = top.document.runBot.poloniexSecret.value;
+	_g["set"]["wexKey"] = top.document.runBot.wexKey.value;
+	_g["set"]["wexSecret"] = top.document.runBot.wexSecret.value;
+
+	var encryptedString = CryptoJS.AES.encrypt(cookieString, top.document.runBot.password.value);
+	setCookie('combot_set_'+top.document.runBot.botSet.value, encryptedString.toString(), { expires: date.toUTCString() });
+	log("Settings Set_"+top.document.runBot.botSet.value+" saved.");
+}
+
+function loadSettings () {
+
+	var settingsString = getCookie('combot_set_'+top.document.runBot.botSet.value);
+	var decryptedString = CryptoJS.AES.decrypt(settingsString, top.document.runBot.password.value);
+
+	if (decryptedString != ""){
+		var brokenString = JSON.parse(decryptedString.toString(CryptoJS.enc.Utf8));
+
+		top.document.runBot.binanceKey.value = brokenString.binanceKey;
+		top.document.runBot.binanceSecret.value = brokenString.binanceSecret;
+		top.document.runBot.bitfinexKey.value = brokenString.bitfinexKey;
+		top.document.runBot.bitfinexSecret.value = brokenString.bitfinexSecret;
+		top.document.runBot.huobiKey.value = brokenString.huobiKey;
+		top.document.runBot.huobiSecret.value = brokenString.huobiSecret;
+		top.document.runBot.okexKey.value = brokenString.okexKey;
+		top.document.runBot.okexSecret.value = brokenString.okexSecret;
+		top.document.runBot.poloniexKey.value = brokenString.poloniexKey;
+		top.document.runBot.poloniexSecret.value = brokenString.poloniexSecret;
+		top.document.runBot.wexKey.value = brokenString.wexKey;
+		top.document.runBot.wexSecret.value = brokenString.wexSecret;
+		top.document.runBot.exBase.selectedIndex = brokenString.exBase;
+		top.document.runBot.exCat.selectedIndex = brokenString.exCat;
+		getPairs('base');
+		getPairs('cat');
+		top.document.runBot.basePairs.selectedIndex = brokenString.basePairs;
+		top.document.runBot.catPairs.selectedIndex = brokenString.catPairs;
+		top.document.runBot.showExBaseQty.value = brokenString.showExBaseQty;
+		top.document.runBot.showExCatQty.value = brokenString.showExCatQty;
+
+		top.document.runBot.orderType.selectedIndex = brokenString.orderType;
+
+		top.document.runBot.minOrder.value = brokenString.minOrder;
+		top.document.runBot.activeOrder.value = brokenString.activeOrder;
+		top.document.runBot.basicOrder.value = brokenString.basicOrder;
+		top.document.runBot.maxStatPrice.value = brokenString.maxStatPrice;
+		top.document.runBot.maxDynamPrice.value = brokenString.maxDynamPrice;
+		top.document.runBot.maxDynamRatio.value = brokenString.maxDynamRatio;
+
+		top.document.runBot.distance.value = brokenString.distance;
+		top.document.runBot.step.value = brokenString.step;
+		top.document.runBot.static.value = brokenString.static;
+
+		top.document.runBot.fromActiveOrder.checked = brokenString.fromActiveOrder;
+		top.document.runBot.fromOpposedOrder.checked = brokenString.fromOpposedOrder;
+		top.document.runBot.maxStat.checked = brokenString.maxStat;
+		top.document.runBot.maxDynam.checked = brokenString.maxDynam;
+		top.document.runBot.minSound.checked = brokenString.minSound;
+		top.document.runBot.activeSound.checked = brokenString.activeSound;
+		top.document.runBot.basicSound.checked = brokenString.basicSound;
+
+		top.document.runBot.stepTime.value = brokenString.stepTime;
+		changePair('base');
+		changePair('cat')
+
+		_g["set"]["binanceKey"] = top.document.runBot.binanceKey.value;
+		_g["set"]["binanceSecret"] = top.document.runBot.binanceSecret.value;
+		_g["set"]["bitfinexKey"] = top.document.runBot.bitfinexKey.value;
+		_g["set"]["bitfinexSecret"] = top.document.runBot.bitfinexSecret.value;
+		_g["set"]["huobiKey"] = top.document.runBot.huobiKey.value;
+		_g["set"]["huobiSecret"] = top.document.runBot.huobiSecret.value;
+		_g["set"]["okexKey"] = top.document.runBot.okexKey.value;
+		_g["set"]["okexSecret"] = top.document.runBot.okexSecret.value;
+		_g["set"]["poloniexKey"] = top.document.runBot.poloniexKey.value;
+		_g["set"]["poloniexSecret"] = top.document.runBot.poloniexSecret.value;
+		_g["set"]["wexKey"] = top.document.runBot.wexKey.value;
+		_g["set"]["wexSecret"] = top.document.runBot.wexSecret.value;
+
+	}
+	log("Settings Set_"+top.document.runBot.botSet.value+" loaded.");
+}
+
+/*Settings_END OK*/
+</script>
+<script type="text/javascript" >
+
+function changePair(type) {
+
+	if (type == 'base'){
+		var pair = _g["pairs"][type][top.document.runBot.basePairs.value];
+	}
+	if (type == 'cat'){
+		var pair = _g["pairs"][type][top.document.runBot.catPairs.value];
+	}
+	var v = pair.split('_');
+	document.getElementById('inner_ex_'+type+'_cur_base_symbol').innerHTML = v[0].toUpperCase();
+	document.getElementById('inner_ex_'+type+'_cur_cat_symbol').innerHTML = v[1].toUpperCase();
+	document.getElementById('inner_ex_'+type+'_cur_cat_symbol_2').innerHTML = v[1].toUpperCase();
+	reCounter();
+
+}
+
+</script>
+<script type="text/javascript" >
+/* Nulled Counter */
+
+function reCounter() {
+	_g["iFoo"] = 1;
+}
+
+/* Nulled Counter */
+</script>
+<script type="text/javascript" >
+/*Load Rules*/
+
+function loadRules() {
+
+getRules('binance');
+getRules('bitfinex');
+getRules('huobi');
+getRules('okex');
+getRules('poloniex');
+getRules('wex');
+getPairs('base');
+getPairs('cat');
+changePair('base');
+changePair('cat');
+
+}
+
+function getRules(exchange) {
+
+var url = ""+_g["host"]+"/api_"+exchange+".php?method=getRules";
+
+var req = getXMLHTTP();
+    if (!req) {
+        log("Unable to set up the XHR object.");
+        return;
+    }
+
+req.open("GET", url, false);
+req.send();
+	if(req.status == 200) {
+		_g["rules"][exchange] = JSON.parse(req.responseText);
+		log("Настройки биржи "+exchange.toUpperCase()+" загружены.");
+	}
+document.getElementById('progress_bar').innerHTML += "x";
+}
+
+/*Load Rules*/
+</script>
+<script type="text/javascript" >
+/*Load Pairs*/
+
+function getPairs(type) {
+
+	if (type == "base") {
+		var exchange = top.document.runBot.exBase.value;
+	}
+	if (type == "cat") {
+		var exchange = top.document.runBot.exCat.value;
+	}
+
+	_g["pairs"][type] = [];
+	innerText = "<select name='"+type+"Pairs' style='width:80px;' onchange='changePair(\""+type+"\")'>";
+	var v;
+	var j=0;
+	for (var k in _g["rules"][exchange]["pairs"]) {
+		_g["pairs"][type][j] = k;
+		v = k.split('_');
+		innerText += "<option value='"+j+"'>"+v[0].toUpperCase()+"/"+v[1].toUpperCase()+"</option>";
+		j++;
+	}
+	innerText += "</select>";
+	document.getElementById('inner_pairs_'+type).innerHTML = innerText;
+	changePair(type);
+
+}
+
+/*Load Pairs*/
+</script>
+<script type="text/javascript" >
+/*Get Order Book*/
+
+function getDepth(type) {
+
+if (type == 'base'){
+	var exchange = top.document.runBot.exBase.value;
+	var pair = _g["pairs"][type][top.document.runBot.basePairs.value];
+	var minSum = top.document.runBot.showExBaseQty.value;
+}
+if (type == 'cat'){
+	var exchange = top.document.runBot.exCat.value;
+	var pair = _g["pairs"][type][top.document.runBot.catPairs.value];
+	var minSum = top.document.runBot.showExCatQty.value;
+}
+
+var url = ""+_g["host"]+"/api_"+exchange+".php?method=getDepth&depth=50&pair="+pair;
+
+var req = getXMLHTTP();
+    if (!req) {
+        log("Unable to set up the XHR object.");
+        return;
+    }
+
+req.open("GET", url, false);
+req.send();
+
+	if(req.status == 200) {
+	  if (req.responseText) {
+		var aroundPrice = _g["rules"][exchange]["pairs"][pair]["aroundPrice"];
+		var aroundQty = _g["rules"][exchange]["pairs"][pair]["aroundQty"];
+		var brokenString = JSON.parse(req.responseText);
+		if (brokenString.success) {
+			var tmpSum;
+			var j=0;
+			for (var i = 0; i < 5; i++) {
+				document.getElementById(type+'_sell_'+i+'_price').innerHTML = "";
+				document.getElementById(type+'_sell_'+i+'_amount').innerHTML = "";
+				document.getElementById(type+'_sell_'+i+'_sum').innerHTML = "";
+				if (typeof(brokenString['asks'][j]) !== 'undefined') {
+					tmpSum = brokenString['asks'][j][0]*brokenString['asks'][j][1];
+					if (tmpSum > minSum) {
+						document.getElementById(type+'_sell_'+i+'_price').style.color = "#000000";
+						document.getElementById(type+'_sell_'+i+'_amount').style.color = "#666666";
+						document.getElementById(type+'_sell_'+i+'_sum').style.color = "#666666";
+						if (typeof(_g["orders"]["min"]) !== 'undefined') {
+							if (parseFloat(brokenString['asks'][j][0]).toFixed(aroundPrice) == parseFloat(_g["orders"]["min"]["price"]).toFixed(aroundPrice)) {
+								document.getElementById(type+'_sell_'+i+'_price').style.color = "#4682b4";
+								document.getElementById(type+'_sell_'+i+'_amount').style.color = "#4682b4";
+								document.getElementById(type+'_sell_'+i+'_sum').style.color = "#4682b4";
+							}
+						}
+						if (typeof(_g["orders"]["active"]) !== 'undefined') {
+							if (parseFloat(brokenString['asks'][j][0]).toFixed(aroundPrice) == parseFloat(_g["orders"]["active"]["price"]).toFixed(aroundPrice)) {
+								document.getElementById(type+'_sell_'+i+'_price').style.color = "#4682b4";
+								document.getElementById(type+'_sell_'+i+'_amount').style.color = "#4682b4";
+								document.getElementById(type+'_sell_'+i+'_sum').style.color = "#4682b4";
+							}
+						}
+						if (typeof(_g["orders"]["basic"]) !== 'undefined') {
+							if (parseFloat(brokenString['asks'][j][0]).toFixed(aroundPrice) == parseFloat(_g["orders"]["basic"]["price"]).toFixed(aroundPrice)) {
+								document.getElementById(type+'_sell_'+i+'_price').style.color = "#4682b4";
+								document.getElementById(type+'_sell_'+i+'_amount').style.color = "#4682b4";
+								document.getElementById(type+'_sell_'+i+'_sum').style.color = "#4682b4";
+							}
+						}
+						document.getElementById(type+'_sell_'+i+'_price').innerHTML = parseFloat(brokenString['asks'][j][0]).toFixed(aroundPrice);
+						document.getElementById(type+'_sell_'+i+'_amount').innerHTML = parseFloat(brokenString['asks'][j][1]).toFixed(aroundQty);
+						document.getElementById(type+'_sell_'+i+'_sum').innerHTML = parseFloat(tmpSum).toFixed(8);
+					} else {i--;}
+				}
+			j++;
+			}
+			var k=0;
+			for (var l = 0; l < 5; l++) {
+				document.getElementById(type+'_buy_'+l+'_price').innerHTML = "";
+				document.getElementById(type+'_buy_'+l+'_amount').innerHTML = "";
+				document.getElementById(type+'_buy_'+l+'_sum').innerHTML = "";
+				if (typeof(brokenString['bids'][k]) !== 'undefined') {
+					tmpSum = brokenString['bids'][k][0]*brokenString['bids'][k][1];
+					if (tmpSum > minSum) {
+						document.getElementById(type+'_buy_'+l+'_price').style.color = "#000000";
+						document.getElementById(type+'_buy_'+l+'_amount').style.color = "#666666";
+						document.getElementById(type+'_buy_'+l+'_sum').style.color = "#666666";
+						if (typeof(_g["orders"]["min"]) !== 'undefined') {
+							if (parseFloat(brokenString['bids'][k][0]).toFixed(aroundPrice) == parseFloat(_g["orders"]["min"]["price"]).toFixed(aroundPrice)) {
+								document.getElementById(type+'_buy_'+l+'_price').style.color = "#4682b4";
+								document.getElementById(type+'_buy_'+l+'_amount').style.color = "#4682b4";
+								document.getElementById(type+'_buy_'+l+'_sum').style.color = "#4682b4";
+							}
+						}
+						if (typeof(_g["orders"]["active"]) !== 'undefined') {
+							if (parseFloat(brokenString['bids'][k][0]).toFixed(aroundPrice) == parseFloat(_g["orders"]["active"]["price"]).toFixed(aroundPrice)) {
+								document.getElementById(type+'_buy_'+l+'_price').style.color = "#4682b4";
+								document.getElementById(type+'_buy_'+l+'_amount').style.color = "#4682b4";
+								document.getElementById(type+'_buy_'+l+'_sum').style.color = "#4682b4";
+							}
+						}
+						if (typeof(_g["orders"]["basic"]) !== 'undefined') {
+							if (parseFloat(brokenString['bids'][k][0]).toFixed(aroundPrice) == parseFloat(_g["orders"]["basic"]["price"]).toFixed(aroundPrice)) {
+								document.getElementById(type+'_buy_'+l+'_price').style.color = "#4682b4";
+								document.getElementById(type+'_buy_'+l+'_amount').style.color = "#4682b4";
+								document.getElementById(type+'_buy_'+l+'_sum').style.color = "#4682b4";
+							}
+						}
+						document.getElementById(type+'_buy_'+l+'_price').innerHTML = parseFloat(brokenString['bids'][k][0]).toFixed(aroundPrice);
+						document.getElementById(type+'_buy_'+l+'_amount').innerHTML = parseFloat(brokenString['bids'][k][1]).toFixed(aroundQty);
+						document.getElementById(type+'_buy_'+l+'_sum').innerHTML = parseFloat(tmpSum).toFixed(8);
+					} else {l--;}
+				}
+			k++;
+			}
+			if (type == "base"){
+				if (top.document.runBot.orderType.value == "buy") {
+					if (typeof(_g["orders"]["active"]) !== 'undefined') {
+						if (parseFloat(document.getElementById("base_buy_0_price").innerHTML).toFixed(aroundPrice) != parseFloat(_g["orders"]["active"]["price"]).toFixed(aroundPrice)) {
+							_g["numSendOrders"] = 0;
+							reCounter();
+							console.log("cancel 1");
+						}
+					}
+				}
+				if (top.document.runBot.orderType.value == "sell") {
+					if (typeof(_g["orders"]["active"]) !== 'undefined') {
+						if (parseFloat(document.getElementById("base_sell_0_price").innerHTML).toFixed(aroundPrice) != parseFloat(_g["orders"]["active"]["price"]).toFixed(aroundPrice)) {
+							_g["numSendOrders"] = 0;
+							reCounter();
+							console.log("cancel 2");
+						}
+					}
+				}
+			}
+		}
+	  }
+	}
+document.getElementById('progress_bar').innerHTML += "d";
+}
+/*Get Order Book*/
+</script>
+<script type="text/javascript" >
+/*Get Active Orders*/
+
+function getOrders() {
+
+var exchange = top.document.runBot.exBase.value;
+var pair = _g["pairs"]["base"][top.document.runBot.basePairs.value];
+var key = _g["set"][exchange+"Key"];
+var secret = _g["set"][exchange+"Secret"];
+
+var url = ""+_g["host"]+"/api_"+exchange+".php?method=getOrders&key="+key+"&secret="+secret+"&pair="+pair;
+
+var req = getXMLHTTP();
+    if (!req) {
+        log("Unable to set up the XHR object.");
+        return;
+    }
+
+req.open("GET", url, false);
+req.send();
+
+	if(req.status == 200) {
+	  if (req.responseText) {
+		var brokenString = JSON.parse(req.responseText);
+		var aroundPrice = _g["rules"][exchange]["pairs"][pair]["aroundPrice"];
+		var aroundQty = _g["rules"][exchange]["pairs"][pair]["aroundQty"];
+		var counter = 0;
+		_g["numOrders"] = 0;
+		document.getElementById('orders').innerHTML = "";
+		if (brokenString.success) {
+			for (var i = 0; i< brokenString["orders"].length; i++) {
+				var v = pair.split('_');
+			  	if (brokenString["orders"][i]["type"] == "buy") {
+					document.getElementById('orders').innerHTML += "<div id=\"id"+brokenString["orders"][i]["id"]+"\" style=\"white-space: nowrap;\"><span style=\"color: #53b987; font-weight: bold;\">BUY</span> "+parseFloat(brokenString["orders"][i]["qty"]).toFixed(aroundQty)+" "+v[0].toUpperCase()+" @ "+parseFloat(brokenString["orders"][i]["price"]).toFixed(aroundPrice)+" "+v[1].toUpperCase()+" <b><span onClick=\"cancelOrder("+brokenString["orders"][i]["id"]+")\" style=\"cursor: pointer; cursor: hand;\">×</span></b></div>";
+					counter++;
+				}
+				if (brokenString["orders"][i]["type"] == "sell") {
+					document.getElementById('orders').innerHTML += "<div id=\"id"+brokenString["orders"][i]["id"]+"\" style=\"white-space: nowrap;\"><span style=\"color: #eb4d5c; font-weight: bold;\">SELL</span> "+parseFloat(brokenString["orders"][i]["qty"]).toFixed(aroundQty)+" "+v[0].toUpperCase()+" @ "+parseFloat(brokenString["orders"][i]["price"]).toFixed(aroundPrice)+" "+v[1].toUpperCase()+" <b><span onClick=\"cancelOrder("+brokenString["orders"][i]["id"]+")\" style=\"cursor: pointer; cursor: hand;\">×</span></b></div>";
+					counter++;
+				}
+			}
+			if (_g["numSendOrders"] == 0 || _g["numSendOrders"] != counter) {
+				_g["numSendOrders"] = 0;
+				_g["queueOrders"] = brokenString["orders"][0]["id"];
+				reCounter();
+				console.log("cancel 3");
+			} else {
+				_g["numOrders"] = counter;
+			}
+		} else {
+			document.getElementById('orders').innerHTML = "";
+		}
+	  }
+    } else {
+    	log("There was a problem while using XMLHTTP:\n" + req.statusText);
+    }
+
+document.getElementById('progress_bar').innerHTML += "o";
+}
+
+/*Get Active Orders OK*/
+</script>
+<script type="text/javascript" >
+/*Get Balance Info*/
+
+function getBalances(type) {
+
+if (type == 'base'){
+	var exchange = top.document.runBot.exBase.value;
+	var pair = _g["pairs"][type][top.document.runBot.basePairs.value];
+}
+if (type == 'cat'){
+	var exchange = top.document.runBot.exCat.value;
+	var pair = _g["pairs"][type][top.document.runBot.catPairs.value];
+}
+
+var v = pair.split('_');
+var key = _g["set"][exchange+"Key"];
+var secret = _g["set"][exchange+"Secret"];
+
+var url = ""+_g["host"]+"/api_"+exchange+".php?method=getBalances&key="+key+"&secret="+secret;
+
+var req = getXMLHTTP();
+    if (!req) {
+        log("Unable to set up the XHR object.");
+        return;
+    }
+
+req.open("GET", url, false);
+req.send();
+	if(req.status == 200) {
+	var brokenString = JSON.parse(req.responseText);
+    	if (brokenString.success == 1) {
+
+    		document.getElementById('inner_ex_'+type+'_cur_base_symbol').innerHTML = v[0].toUpperCase();
+			document.getElementById('inner_ex_'+type+'_cur_base_fund').innerHTML = (brokenString["funds"][(v[0])]).toFixed(8);
+			document.getElementById('inner_ex_'+type+'_cur_cat_symbol').innerHTML = v[1].toUpperCase();
+			document.getElementById('inner_ex_'+type+'_cur_cat_symbol_2').innerHTML = v[1].toUpperCase();
+			document.getElementById('inner_ex_'+type+'_cur_cat_fund').innerHTML = (brokenString["funds"][(v[1])]).toFixed(8);
+		}
+	}
+document.getElementById('progress_bar').innerHTML += "b";
+}
+
+/*Get Balance Info*/
+</script>
+<script type="text/javascript" >
+/*Cancel Order*/
+
+function cancelOrder(orderId) {
+
+var exchange = top.document.runBot.exBase.value;
+var pair = _g["pairs"]["base"][top.document.runBot.basePairs.value];
+var key = _g["set"][exchange+"Key"];
+var secret = _g["set"][exchange+"Secret"];
+
+var url = ""+_g["host"]+"/api_"+exchange+".php?method=cancelOrder&key="+key+"&secret="+secret+"&id="+orderId+"&pair="+pair;
+
+var req = getXMLHTTP();
+    if (!req) {
+        log("Unable to set up the XHR object.");
+        return;
+    }
+
+req.open("GET", url, false);
+req.send();
+
+	if(req.status == 200) {
+
+		var brokenString = JSON.parse(req.responseText);
+		if (brokenString.success == 1) {
+			log("Ордер №"+orderId+" был отменен.");
+			document.getElementById('progress_bar').innerHTML += "c";
+			_g["queueOrders"] = 0;
+			if (document.getElementById('id'+orderId) !== null) {document.getElementById('id'+orderId).style.display = "none";}
+		}
+	} else {
+		log("There was a problem while using XMLHTTP:\n" + req.statusText);
+	}
+}
+
+/*Cancel Order OK*/
+</script>
+<script type="text/javascript" >
+/*Order Control*/
+
+function controlPrice(type,qty,price) {
+
+if (type == "buy") {
+	var com = parseFloat(qty*price);
+	var amount = parseFloat(document.getElementById('inner_ex_base_cur_cat_fund').innerHTML);
+}
+if (type == "sell") {
+	var com = parseFloat(qty);
+	var amount = parseFloat(document.getElementById('inner_ex_base_cur_base_fund').innerHTML);
+}
+var exchange = top.document.runBot.exBase.value;
+var pair = _g["pairs"]["base"][top.document.runBot.basePairs.value];
+var minQty = parseFloat(_g["rules"][exchange]["pairs"][pair]["minQty"]);
+var maxQty = parseFloat(_g["rules"][exchange]["pairs"][pair]["maxQty"]);
+var minPrice = parseFloat(_g["rules"][exchange]["pairs"][pair]["minPrice"]);
+var maxPrice = parseFloat(_g["rules"][exchange]["pairs"][pair]["maxPrice"]);
+var minSum = parseFloat(_g["rules"][exchange]["pairs"][pair]["minSum"]);
+var maxSum = parseFloat(_g["rules"][exchange]["pairs"][pair]["maxSum"]);
+var counter = 0;
+	if (minQty > 0) {
+		if (qty >= minQty) {
+			counter++;
+		} else {console.log("ERROR: minQty");}
+	} else {
+		counter++;
+	}
+
+	if (minPrice > 0) {
+		if (price >= minPrice) {
+			counter++;
+		} else {console.log("ERROR: minPrice");}
+	} else {
+		counter++;
+	}
+
+	if (minSum > 0) {
+		if ((price*qty) >= minSum) {
+			counter++;
+		} else {console.log("ERROR: minSum");}
+	} else {
+		counter++;
+	}
+
+	if (maxQty > 0) {
+		if (qty <= maxQty) {
+			counter++;
+		} else {console.log("ERROR: maxQty");}
+	} else {
+		counter++;
+	}
+
+	if (maxPrice > 0) {
+		if (price <= maxPrice) {
+			counter++;
+		} else {console.log("ERROR: maxPrice");}
+	} else {
+		counter++;
+	}
+
+	if (maxSum > 0) {
+		if ((price*qty) <= maxSum) {
+			counter++;
+		} else {console.log("ERROR: maxSum");}
+	} else {
+		counter++;
+	}
+
+	if (com <= amount) {
+		counter++;
+	}
+	if (counter == 7) {
+		return 1;
+	} else {
+		return 0;
+	}
+}
+
+/*Order Control*/
+</script>
+<script type="text/javascript" >
+/*SEND ORDER*/
+
+function sendOrder(type,qty,price) {
+
+var exchange = top.document.runBot.exBase.value;
+var pair = _g["pairs"]["base"][top.document.runBot.basePairs.value];
+var key = _g["set"][exchange+"Key"];
+var secret = _g["set"][exchange+"Secret"];
+var aroundPrice = _g["rules"][exchange]["pairs"][pair]["aroundPrice"];
+var aroundQty = _g["rules"][exchange]["pairs"][pair]["aroundQty"];
+
+if (type == "buy") {
+	url = ""+_g["host"]+"/api_"+exchange+".php?method=sendOrder&key="+key+"&secret="+secret+"&pair="+pair+"&type=buy&qty="+qty+"&price="+price;
+}
+if (type == "sell") {
+	url = ""+_g["host"]+"/api_"+exchange+".php?method=sendOrder&key="+key+"&secret="+secret+"&pair="+pair+"&type=sell&qty="+qty+"&price="+price;
+}
+
+var req = getXMLHTTP();
+    if (!req) {
+        log("Unable to set up the XHR object.");
+        return;
+    }
+
+req.open("GET", url, false);
+req.send();
+
+	if (req.status == 200) {
+	var brokenString = JSON.parse(req.responseText);
+		if (brokenString.success == 1) {
+			var v = pair.split('_');
+			if (type == "buy") {
+				log("<span style=\"color: #53b987; font-weight: bold;\">BUY</span> "+parseFloat(qty).toFixed(aroundQty)+" "+v[0].toUpperCase()+" @ "+parseFloat(price).toFixed(aroundPrice)+" "+v[1].toUpperCase());
+				document.getElementById('orders').innerHTML += "<div id=\"id"+brokenString["id"]+"\" style=\"white-space: nowrap;\"><span style=\"color: #53b987; font-weight: bold;\">BUY</span> "+parseFloat(qty).toFixed(aroundQty)+" "+v[0].toUpperCase()+" @ "+parseFloat(price).toFixed(aroundPrice)+" "+v[1].toUpperCase()+" <b><span onClick=\"cancelOrder("+brokenString["id"]+")\" style=\"cursor: pointer; cursor: hand;\">×</span></b></div>";
+				document.getElementById('progress_bar').innerHTML += "s";
+			}
+			if (type == "sell") {
+				log("<span style=\"color: #eb4d5c; font-weight: bold;\">SELL</span> "+parseFloat(qty).toFixed(aroundQty)+" "+v[0].toUpperCase()+" @ "+parseFloat(price).toFixed(aroundPrice)+" "+v[1].toUpperCase());
+				document.getElementById('orders').innerHTML += "<div id=\"id"+brokenString["id"]+"\" style=\"white-space: nowrap;\"><span style=\"color: #eb4d5c; font-weight: bold;\">SELL</span> "+parseFloat(qty).toFixed(aroundQty)+" "+v[0].toUpperCase()+" @ "+parseFloat(price).toFixed(aroundPrice)+" "+v[1].toUpperCase()+" <b><span onClick=\"cancelOrder("+brokenString["id"]+")\" style=\"cursor: pointer; cursor: hand;\">×</span></b></div>";
+				document.getElementById('progress_bar').innerHTML += "s";
+			}
+			_g["numSendOrders"]++;
+			return brokenString["id"];
+		} else {
+			return 0;
+		}
+	}
+}
+
+/*SEND ORDER*/
+</script>
+<script type="text/javascript" >
+/*Prerair Order*/
+
+function preOrder() {
+
+var exchange = top.document.runBot.exBase.value;
+var pair = _g["pairs"]["base"][top.document.runBot.basePairs.value];
+var aroundPrice = _g["rules"][exchange]["pairs"][pair]["aroundPrice"];
+var aroundQty = _g["rules"][exchange]["pairs"][pair]["aroundQty"];
+
+if (_g["botIsRun"] == 1){ //Проверка, что бот включен
+	if (_g["queueOrders"] == 0) { //Проверка, что ордеров на отмену нет
+		var type = top.document.runBot.orderType.value;
+		var control = 0;
+		//Формирование ордеров покупки
+		if (type == "buy") {
+			var counter = 0;
+			if (typeof(_g["orders"]["active"]) === 'undefined' && top.document.runBot.activeOrder.value != 0) { //Если активный ордер отсутствует и поле заполнено
+				var price = (parseFloat(document.getElementById("base_buy_0_price").innerHTML) + parseFloat(top.document.runBot.step.value)).toFixed(aroundPrice);
+				var qty = parseFloat(top.document.runBot.activeOrder.value).toFixed(aroundQty);
+				control = controlPrice(type,qty,price);
+				var order = "active";
+				if (control == 1) {
+					counter++;
+				}
+			}
+			if (typeof(_g["orders"]["min"]) === 'undefined' && top.document.runBot.minOrder.value != 0 && counter == 0) { //Если минимальный ордер отсутствует и поле заполнено
+				var price = (parseFloat(document.getElementById("base_buy_0_price").innerHTML) + parseFloat(top.document.runBot.distance.value)).toFixed(aroundPrice);
+				var qty = parseFloat(top.document.runBot.minOrder.value).toFixed(aroundQty);
+				control = controlPrice(type,qty,price);
+				var order = "min";
+				if (control == 1) {
+					counter++;
+				}
+			}
+			if (typeof(_g["orders"]["basic"]) === 'undefined' && top.document.runBot.basicOrder.value != 0 && counter == 0) { //Если основной ордер отсутствует и поле заполнено
+				var price = parseFloat(top.document.runBot.static.value).toFixed(aroundPrice);
+				var qty = parseFloat(top.document.runBot.basicOrder.value).toFixed(aroundQty);
+				if (parseFloat(document.getElementById("inner_ex_base_cur_cat_fund").innerHTML) < qty) { //Проверяем, если средств недостаточно, то вычисляем достаточный размер ордера
+					qty = (parseFloat(document.getElementById("inner_ex_base_cur_cat_fund").innerHTML)/price).toFixed(aroundQty);
+				}
+				control = controlPrice(type,qty,price);
+				var order = "basic";
+				if (control == 1) {
+					counter++;
+				}
+			}
+		}
+		//Формирование ордеров продажи
+		if (type == "sell") {
+			var counter = 0;
+			if (typeof(_g["orders"]["active"]) === 'undefined' && top.document.runBot.activeOrder.value != 0) { //Если активный ордер отсутствует и поле заполнено
+				var price = (parseFloat(document.getElementById("base_sell_0_price").innerHTML) - parseFloat(top.document.runBot.step.value)).toFixed(aroundPrice);
+				var qty = parseFloat(top.document.runBot.activeOrder.value).toFixed(aroundQty);
+				control = controlPrice(type,qty,price);
+				var order = "active";
+				if (control == 1) {
+					counter++;
+				}
+			}
+			if (typeof(_g["orders"]["min"]) === 'undefined' && top.document.runBot.minOrder.value != 0 && counter == 0) { //Если минимальный ордер отсутствует и поле заполнено
+				var price = (parseFloat(document.getElementById("base_sell_0_price").innerHTML) - parseFloat(top.document.runBot.distance.value)).toFixed(aroundPrice);
+				var qty = parseFloat(top.document.runBot.minOrder.value).toFixed(aroundQty);
+				control = controlPrice(type,qty,price);
+				var order = "min";
+				if (control == 1) {
+					counter++;
+				}
+			}
+			if (typeof(_g["orders"]["basic"]) === 'undefined' && top.document.runBot.basicOrder.value != 0 && counter == 0) { //Если основной ордер отсутствует и поле заполнено
+				var price = parseFloat(top.document.runBot.static.value).toFixed(aroundPrice);
+				var qty = parseFloat(top.document.runBot.basicOrder.value).toFixed(aroundQty);
+				if (parseFloat(document.getElementById("inner_ex_base_cur_base_fund").innerHTML) < qty) { //Проверяем, если средств недостаточно, то вычисляем достаточный размер ордера
+					qty = parseFloat(document.getElementById("inner_ex_base_cur_base_fund").innerHTML).toFixed(aroundQty);
+				}
+				control = controlPrice(type,qty,price);
+				var order = "basic";
+				if (control == 1) {
+					counter++;
+				}
+			}
+		}
+
+		if (control == 1) {
+			var send = sendOrder(type,qty,price);
+			if (send != 0) {
+				_g["orders"][order] = [];
+				_g["orders"][order]["price"] = price;
+				_g["orders"][order]["id"] = send;
+			}
+		}
+	}
+}
+
+}
+
+/*Prerair Order*/
+</script>
+<script type="text/javascript" >
+/*Page Structure*/
+
+function initPage() {
+
+	//Show Bar
+	showPop();
+
+	var msec = parseInt(top.document.runBot.stepTime.value)*200;
+
+	setInterval(refreshData, msec);
+
+log("Com-Bot инициализирован.");
+}
+
+/*Page Structure*/
+</script>
+<script type="text/javascript" >
+/*Refresh Data*/
+
+function refreshData () {
+
+	if (_g["queueOrders"] != 0) {
+		cancelOrder(_g["queueOrders"]);
+		_g["iFoo"] == 1;
+	}
+
+	if (_g["numOrders"] == 0) {
+		_g["orders"] = [];
+	}
+
+	if (_g["iProg"] >= 32) {
+		document.getElementById('progress_bar').innerHTML = "Активность: ";
+		_g["iProg"] = 0;
+	}
+
+	if (_g["iFoo"] == 1) {
+		getOrders();
+	}
+
+	if (_g["iFoo"] == 2) {
+		getDepth('base');
+		getDepth('cat');
+	}
+
+	if (_g["iFoo"] == 3) {
+		getBalances('base');
+		getBalances('cat');
+	}
+
+	if (_g["queueOrders"] == 0 && _g["numOrders"] == _g["numSendOrders"] && _g["iFoo"] == 4) {
+		preOrder();
+	}
+
+	_g["iProg"]++;
+	_g["iFoo"]++;
+	if (_g["iFoo"] > 4){_g["iFoo"] = 1;}
+
+}
+
+/*Refresh Data*/
+</script>
+<script type="text/javascript" >
+/*Run Bot*/
+
+function initBot(status) {
+if (status == "start") {
+	if (_g["botIsRun"] != 1){
+		_g["botIsRun"] = 1;
+		_g["numSendOrders"] = 0;
+		_g["orders"] = [];
+		document.getElementById('bot_status').innerHTML = '<span style="color: #0c0;">&#9679;</span> Бот запущен';
+		log("Com-Bot Запущен.");
+	}
+}
+if (status == "stop") {
+ if (_g["botIsRun"] == 1){
+		_g["botIsRun"] = 0;
+		document.getElementById('bot_status').innerHTML = '<span style="color: #f00;">&#9679;</span> Бот остановлен';
+		log("Com-Bot Остановлен.");
+	}
+}
+
+}
+
+/*Run Bot*/
+</script>
+<body onload='loadRules();'>
+<table cellpadding='0' cellspacing='0' border='0' width='100%'>
+<tr>
+<td width='100%'>
+
+<center>
+	<table cellpadding='0' cellspacing='0' border='0' width='1200'>
+	<tr>
+	<td width='1200'>
+
+	<form name='runBot' method='get' action='/'>
+
+		<table cellpadding='0' cellspacing='0' border='0' width='100%'>
+		<tr>
+		<td width='100' valign='top'>
+		<div id='hide_button'>
+		</div>
+		</td>
+		<td width=* height='40'>
+		<div id='run'>
+
+			<table cellpadding='0' cellspacing='0' border='0' width='100%'>
+			<tr>
+			<td width='100%'>
+			<input type='text' name='binanceKey' placeholder='Binance API key'>
+			<input type='text' name='binanceSecret' placeholder='Binance API secret'> Binance<br>
+			<input type='text' name='bitfinexKey' placeholder='Bitfinex API key'>
+			<input type='text' name='bitfinexSecret' placeholder='Bitfinex API secret'> Bitfinex<br>
+			<input type='text' name='huobiKey' placeholder='Huobi API key'>
+			<input type='text' name='huobiSecret' placeholder='Huobi API secret'> Huobi<br>
+			<input type='text' name='okexKey' placeholder='OKEx API key'>
+			<input type='text' name='okexSecret' placeholder='OKEx API secret'> OKEx<br>
+			<input type='text' name='poloniexKey' placeholder='Poloniex API key'>
+			<input type='text' name='poloniexSecret' placeholder='Poloniex API secret'> Poloniex<br>
+			<input type='text' name='wexKey' placeholder='WEX API key'>
+			<input type='text' name='wexSecret' placeholder='WEX API secret'> WEX<br>
+			<input type='button' name='initButton' value='Включение' onClick='initPage();'>
+			<input type='password' name='password' placeholder='password' style='width:80px;'>
+			<input type='button' name='loadButton' value='Загрузить' onClick='loadSettings();'>
+			<input type='button' name='saveButton' value='Сохранить' onClick='saveSettings();'>
+			<br><br>
+			</td>
+			</tr>
+			</table>
+
+		</div>
+		<div id='bot_status'><span style="color: #f00;">&#9679;</span> Бот остановлен</div>
+		</td>
+		</tr>
+		</table>
+
+		<table cellpadding='0' cellspacing='0' border='0' width='100%'>
+		<tr>
+		<td width='400' valign='top'>
+
+			<table cellpadding='0' cellspacing='0' border='0' width='100%'>
+			<tr>
+			<td width='400'>
+			<div style='float: left;'>
+			Основная биржа:
+			<select id='ex_base' name='exBase' style='width:80px;' onchange='getPairs("base")'>
+			  <option value='binance'>Binance</option>
+			  <option value='bitfinex'>Bitfinex</option>
+			  <option value='huobi'>Huobi</option>
+			  <option value='okex'>OKEx</option>
+			  <option value='poloniex'>Poloniex</option>
+			  <option value='wex'>WEX</option>
+			</select>
+			Пара:
+			</div>
+			<div id='inner_pairs_base' style='float: left;'>
+			<select name='basePairs' style='width:80px;'>
+			  <option value='0'>LTC/BTC</option>
+			</select>
+			</div><br><br>
+			</td>
+			</tr>
+			<tr>
+			<td>
+			<div style='float: left; width: 80px;'>Баланс:
+			</div>
+			<div id='inner_ex_base_cur_base_symbol' style='float: left; width: 80px;'>LTC
+			</div>
+			<div id='inner_ex_base_cur_base_fund' style='float: left; width: 180px;'>0.00000000
+			</div><br>
+			<div style='float: left; width: 80px;'>&nbsp;
+			</div>
+			<div id='inner_ex_base_cur_cat_symbol' style='float: left; width: 80px;'>BTC
+			</div>
+			<div id='inner_ex_base_cur_cat_fund' style='float: left; width: 180px;'>0.00000000
+			</div><br><br>
+			</td>
+			</tr>
+			<tr>
+			<td>
+			<div style='float: left; width: 200px; margin: 4px;'>Показывать объём больше:
+			</div>
+			<div id='inner_ex_base_cur_cat_symbol_2' style='float: left; width: 50px; margin: 4px;'>BTC
+			</div>
+			<div style='float: left; width: 100px;'><input type='number' step='any' name='showExBaseQty' placeholder='amount' style='width:80px;'>
+			</div><br><br>
+			</td>
+			</tr>
+			</table>
+		</td>
+		<td width='400' valign='top'>
+			<table cellpadding='0' cellspacing='0' border='0' width='100%'>
+			<tr>
+			<td width='400'>
+			<div style='float: left;'>
+			Котируемая биржа:
+			<select id='ex_cat' name='exCat' style='width:80px;' onchange='getPairs("cat")'>
+			  <option value='binance'>Binance</option>
+			  <option value='bitfinex'>Bitfinex</option>
+			  <option value='huobi'>Huobi</option>
+			  <option value='okex'>OKEx</option>
+			  <option value='poloniex'>Poloniex</option>
+			  <option value='wex'>WEX</option>
+			</select>
+			Пара:
+			</div>
+			<div id='inner_pairs_cat' style='float: left;'>
+			<select name='catPairs' style='width:80px;'>
+			  <option value='0'>LTC/BTC</option>
+			</select>
+			</div><br><br>
+			</td>
+			</tr>
+			<tr>
+			<td>
+			<div style='float: left; width: 80px;'>Баланс:
+			</div>
+			<div id='inner_ex_cat_cur_base_symbol' style='float: left; width: 80px;'>LTC
+			</div>
+			<div id='inner_ex_cat_cur_base_fund' style='float: left; width: 180px;'>0.00000000
+			</div><br>
+			<div style='float: left; width: 80px;'>&nbsp;
+			</div>
+			<div id='inner_ex_cat_cur_cat_symbol' style='float: left; width: 80px;'>BTC
+			</div>
+			<div id='inner_ex_cat_cur_cat_fund' style='float: left; width: 180px;'>0.00000000
+			</div><br><br>
+			</td>
+			</tr>
+			<tr>
+			<td>
+			<div style='float: left; width: 200px; margin: 4px;'>Показывать объём больше:
+			</div>
+			<div id='inner_ex_cat_cur_cat_symbol_2' style='float: left; width: 50px; margin: 4px;'>BTC
+			</div>
+			<div style='float: left; width: 100px;'><input type='number' step='any' name='showExCatQty' placeholder='amount' style='width:80px;'>
+			</div><br><br>
+			</td>
+			</tr>
+			</table>
+		</td>
+		<td width='400' valign='top' rowspan='2'>
+			<table cellpadding='0' cellspacing='0' border='0' width='100%'>
+			<tr>
+			<td width='400' colspan='3'>
+			<div style='float: left;'>
+			Сторона:
+			<select id='order_type' name='orderType' style='width:80px;'>
+			  <option value='buy'>BUY</option>
+			  <option value='sell'>SELL</option>
+			</select>
+			<br><br>
+			</td>
+			</tr>
+			<tr>
+			<td valign='top'>Мин. ордер<br>
+			<input type='number' step='any' name='minOrder' placeholder='amount' style='width:80px;'>
+			<br><br>
+			</td>
+			<td valign='top'>Дистанция<br>
+			<input type='number' step='any' name='distance' placeholder='price' style='width:80px;'>
+			<br><br>
+			</td>
+			<td valign='top'>
+			<input type='checkbox' id='fromActiveOrder' name='fromActiveOrder' value='1'>
+    			<label for='fromActiveOrder'>От активного ордера</label><br>
+			<input type='checkbox' id='fromOpposedOrder' name='fromOpposedOrder' value='1'>
+    			<label for='fromOpposedOrder'>От противоположного ордера</label>
+    		<br><br>
+			</td>
+			</tr>
+			<tr>
+			<td valign='top'>Актив. ордер<br>
+			<input type='number' step='any' name='activeOrder' placeholder='amount' style='width:80px;'>
+			<br><br>
+			</td>
+			<td valign='top'>Шаг<br>
+			<input type='number' step='any' name='step' placeholder='price' style='width:80px;'>
+			<br><br>
+			</td>
+			<td valign='top'>
+			<input type='checkbox' id='maxStat' name='maxStat' value='1'>
+    			<label for='maxStat'>Макс. цена статич.</label><br>
+    		<input type='number' step='any' name='maxStatPrice' placeholder='price' style='width:80px;'><br>
+			<input type='checkbox' id='maxDynam' name='maxDynam' value='1'>
+    			<label for='maxDynam'>Макс. цена динамич.</label><br>
+    		<input type='number' step='any' name='maxDynamRatio' placeholder='ratio' style='width:80px;'>&nbsp;<input type='number' step='any' name='maxDynamPrice' placeholder='price' style='width:80px;'><br>
+			<br><br>
+			</td>
+			</tr>
+			<tr>
+			<td valign='top'>Осн. ордер<br>
+			<input type='number' step='any' name='basicOrder' placeholder='price' style='width:80px;'>
+			<br><br>
+			</td>
+			<td valign='top'>Статич. цена<br>
+			<input type='number' step='any' name='static' placeholder='price' style='width:80px;'>
+			<br><br>
+			</td>
+			<td>
+			<div style='float: left; width: 80px;'>
+				<input type='button' name='startButton' value='СТАРТ' onClick='initBot("start");' class='start_button'>
+			</div>
+			<div style='float: left; width: 80px;'>
+				<input type='button' name='stopButton' value='СТОП' onClick='initBot("stop");' class='stop_button'>
+			</div>
+			</td>
+			</tr>
+			<tr>
+			<td colspan='2' valign='top'>Звук<br>
+			<input type='checkbox' id='minSound' name='minSound' value='1'>
+    			<label for='minSound'>Минимальный ордер</label><br>
+			<input type='checkbox' id='activeSound' name='activeSound' value='1'>
+    			<label for='activeSound'>Активный ордер</label><br>
+    		<input type='checkbox' id='basicSound' name='basicSound' value='1'>
+    			<label for='basicSound'>Основной ордер</label>
+    		<br><br>
+			</td>
+			<td valign='top'>Обновление<br>
+			<input type='number' step='1' name='stepTime' placeholder='sec' value='60' style='width:80px;'>
+			<br><br>
+			</td>
+			</tr>
+			<tr>
+			<td colspan='3' valign='top'>
+			<select name='botSet' style='width:80px;'>
+			  <option value='1'>Set: 1</option>
+			  <option value='2'>Set: 2</option>
+			  <option value='3'>Set: 3</option>
+			  <option value='4'>Set: 4</option>
+			  <option value='5'>Set: 5</option>
+			  <option value='6'>Set: 6</option>
+			  <option value='7'>Set: 7</option>
+			  <option value='8'>Set: 8</option>
+			  <option value='9'>Set: 9</option>
+			  <option value='10'>Set: 10</option>
+			  <option value='11'>Set: 11</option>
+			  <option value='12'>Set: 12</option>
+			  <option value='13'>Set: 13</option>
+			  <option value='14'>Set: 14</option>
+			  <option value='15'>Set: 15</option>
+			  <option value='16'>Set: 16</option>
+			  <option value='17'>Set: 17</option>
+			  <option value='18'>Set: 18</option>
+			  <option value='19'>Set: 19</option>
+			  <option value='20'>Set: 20</option>
+			</select>
+			<br><br>
+			</td>
+			</tr>
+			</table>
+		</td>
+		</tr>
+		<tr>
+		<td width='800' valign='top' colspan='2'>
+			<table cellpadding='0' cellspacing='0' border='0' width='100%'>
+			<tr><td width=*></td><td align='center'><b>Сумма</b></td><td align='center'><b>Объём</b></td><td align='center'><b>Цена</b></td><td width=50></td><td align='center'><b>Цена</b></td><td align='center'><b>Объём</b></td><td align='center'><b>Сумма</b></td><td width=*></td></tr></tr>
+			<tr><td width=*></td><td class='tab_cell'><div id='base_sell_4_sum'>0.0000897</div></td><td class='tab_cell'><div id='base_sell_4_amount'>0.023</div></td><td class='tab_cell'><div class='price' id='base_sell_4_price'>0.0039</div></td><td class='tab_cell_ask'>sell 5</td><td class='tab_cell'><div class='price' id='cat_sell_4_price'>0.0042</div></td><td class='tab_cell'><div id='cat_sell_4_amount'>0.017</div></td><td class='tab_cell'><div id='cat_sell_4_sum'>0.0000714</div></td><td width=*></td></tr></tr>
+			<tr><td width=*></td><td class='tab_cell'><div id='base_sell_3_sum'>0.0025118</div></td><td class='tab_cell'><div id='base_sell_3_amount'>0.661</div></td><td class='tab_cell'><div class='price' id='base_sell_3_price'>0.0038</div></td><td class='tab_cell_ask'>sell 4</td><td class='tab_cell'><div class='price' id='cat_sell_3_price'>0.0040</div></td><td class='tab_cell'><div id='cat_sell_3_amount'>0.127</div></td><td class='tab_cell'><div id='cat_sell_3_sum'>0.000508</div></td><td width=*></td></tr></tr>
+			<tr><td width=*></td><td class='tab_cell'><div id='base_sell_2_sum'>0.000851</div></td><td class='tab_cell'><div id='base_sell_2_amount'>0.230</div></td><td class='tab_cell'><div class='price' id='base_sell_2_price'>0.0037</div></td><td class='tab_cell_ask'>sell 3</td><td class='tab_cell'><div class='price' id='cat_sell_2_price'>0.0037</div></td><td class='tab_cell'><div id='cat_sell_2_amount'>0.011</div></td><td class='tab_cell'><div id='cat_sell_2_sum'>0.0000407</div></td><td width=*></td></tr></tr>
+			<tr><td width=*></td><td class='tab_cell'><div id='base_sell_1_sum'>0.001932</div></td><td class='tab_cell'><div id='base_sell_1_amount'>0.552</div></td><td class='tab_cell'><div class='price' id='base_sell_1_price'>0.0035</div></td><td class='tab_cell_ask'>sell 2</td><td class='tab_cell'><div class='price' id='cat_sell_1_price'>0.0036</div></td><td class='tab_cell'><div id='cat_sell_1_amount'>0.023</div></td><td class='tab_cell'><div id='cat_sell_1_sum'>0.0000828</div></td><td width=*></td></tr></tr>
+			<tr><td width=*></td><td class='tab_cell' style='background-color: #ffa8b4;'><div id='base_sell_0_sum'>0.0003196</div></td><td class='tab_cell' style='background-color: #ffa8b4;'><div id='base_sell_0_amount'>0.094</div></td><td class='tab_cell' style='background-color: #ffa8b4;'><div class='price' id='base_sell_0_price'>0.0034</div></td><td class='tab_cell_ask'>sell 1</td><td class='tab_cell' style='background-color: #ffa8b4;'><div class='price' id='cat_sell_0_price'>0.0035</div></td><td class='tab_cell' style='background-color: #ffa8b4;'><div id='cat_sell_0_amount'>0.012</div></td><td class='tab_cell' style='background-color: #ffa8b4;'><div id='cat_sell_0_sum'>0.000042</div></td><td width=*></td></tr></tr>
+			<tr><td width=*></td><td class='tab_cell' style='background-color: #adffdc;'><div id='base_buy_0_sum'>0.00058</div></td><td class='tab_cell' style='background-color: #adffdc;'><div id='base_buy_0_amount'>0.200</div></td><td class='tab_cell' style='background-color: #adffdc;'><div class='price' id='base_buy_0_price'>0.0029</div></td><td class='tab_cell_bid'>buy 1</td><td class='tab_cell' style='background-color: #adffdc;'><div class='price' id='cat_buy_0_price'>0.0031</div></td><td class='tab_cell' style='background-color: #adffdc;'><div id='cat_buy_0_amount'>0.010</div></td><td class='tab_cell' style='background-color: #adffdc;'><div id='cat_buy_0_sum'>0.000031</div></td><td width=*></td></tr></tr>
+			<tr><td width=*></td><td class='tab_cell'><div id='base_buy_1_sum'>0.00105</div></td><td class='tab_cell'><div id='base_buy_1_amount'>0.375</div></td><td class='tab_cell'><div class='price' id='base_buy_1_price'>0.0028</div></td><td class='tab_cell_bid'>buy 2</td><td class='tab_cell'><div class='price' id='cat_buy_1_price'>0.0030</div></td><td class='tab_cell'><div id='cat_buy_1_amount'>0.309</div></td><td class='tab_cell'><div id='cat_buy_1_sum'>0.000927</div></td><td width=*></td></tr></tr>
+			<tr><td width=*></td><td class='tab_cell'><div id='base_buy_2_sum'>0.0003591</div></td><td class='tab_cell'><div id='base_buy_2_amount'>0.133</div></td><td class='tab_cell'><div class='price' id='base_buy_2_price'>0.0027</div></td><td class='tab_cell_bid'>buy 3</td><td class='tab_cell'><div class='price' id='cat_buy_2_price'>0.0029</div></td><td class='tab_cell'><div id='cat_buy_2_amount'>0.056</div></td><td class='tab_cell'><div id='cat_buy_2_sum'>0.0001624</div></td><td width=*></td></tr></tr>
+			<tr><td width=*></td><td class='tab_cell'><div id='base_buy_3_sum'>0.0001944</div></td><td class='tab_cell'><div id='base_buy_3_amount'>0.081</div></td><td class='tab_cell'><div class='price' id='base_buy_3_price'>0.0024</div></td><td class='tab_cell_bid'>buy 4</td><td class='tab_cell'><div class='price' id='cat_buy_3_price'>0.0027</div></td><td class='tab_cell'><div id='cat_buy_3_amount'>0.029</div></td><td class='tab_cell'><div id='cat_buy_3_sum'>0.0000783</div></td><td width=*></td></tr></tr>
+			<tr><td width=*></td><td class='tab_cell'><div id='base_buy_4_sum'>0.0002247</div></td><td class='tab_cell'><div id='base_buy_4_amount'>0.107</div></td><td class='tab_cell'><div class='price' id='base_buy_4_price'>0.0021</div></td><td class='tab_cell_bid'>buy 5</td><td class='tab_cell'><div class='price' id='cat_buy_4_price'>0.0026</div></td><td class='tab_cell'><div id='cat_buy_4_amount'>0.088</div></td><td class='tab_cell'><div id='cat_buy_4_sum'>0.0002288</div></td><td width=*></td></tr></tr>
+			</table>
+		</td>
+		</tr>
+		<tr>
+		<td colspan='2' valign='top'>
+		<div id='progress_bar' style='margin-top: 10px;'>Активность: </div>
+		<div id='logs'>ЛОГИ:<br>Добро пожаловать. Com-Bot загружается...<br></div>
+		</td>
+		<td width=* valign='top'>
+		Активные ордера:<br>
+		<div id='orders'><br></div>
+		</td>
+		</tr>
+		</table>
+
+	</form>
+
+	</td>
+	</tr>
+	</table>
+
+</center>
+
+</td>
+</tr>
+</table>
+
+</body>
+</html>
